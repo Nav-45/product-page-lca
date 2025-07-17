@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Plus, Download, Settings, User } from "lucide-react";
+import { Plus, Download, Settings, User, Upload } from "lucide-react";
 import { Button } from "./ui/button";
 
 interface HeaderProps {
@@ -7,13 +7,19 @@ interface HeaderProps {
   totalEmissions: number;
   onAddProduct: () => void;
   onExportReport: () => void;
+  onImportCSV: () => void;
+  onShowSettings: () => void;
+  onShowProfile: () => void;
 }
 
 export const Header = ({ 
   totalProducts, 
   totalEmissions, 
   onAddProduct, 
-  onExportReport 
+  onExportReport,
+  onImportCSV,
+  onShowSettings,
+  onShowProfile
 }: HeaderProps) => {
   const formatCO2 = (value: number) => {
     if (value >= 1000) {
@@ -48,7 +54,7 @@ export const Header = ({
             
             {/* Mobile user menu */}
             <div className="lg:hidden">
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" onClick={onShowProfile}>
                 <User className="w-5 h-5" />
               </Button>
             </div>
@@ -98,6 +104,15 @@ export const Header = ({
             )}
             
             <Button 
+              variant="outline"
+              onClick={onImportCSV}
+              className="gap-2"
+            >
+              <Upload className="w-4 h-4" />
+              Import CSV
+            </Button>
+            
+            <Button 
               onClick={onAddProduct}
               className="gap-2"
             >
@@ -107,10 +122,10 @@ export const Header = ({
             
             {/* Desktop user menu */}
             <div className="hidden lg:flex items-center space-x-2">
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" onClick={onShowSettings}>
                 <Settings className="w-4 h-4" />
               </Button>
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" onClick={onShowProfile}>
                 <User className="w-4 h-4" />
               </Button>
             </div>

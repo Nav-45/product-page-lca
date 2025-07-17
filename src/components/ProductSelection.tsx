@@ -3,6 +3,13 @@ import { motion } from "framer-motion";
 import { Header } from "./Header";
 import { ProductGrid } from "./ProductGrid";
 import { EmptyState } from "./EmptyState";
+import { AddProductModal } from "./AddProductModal";
+import { ProductBreakdownModal } from "./ProductBreakdownModal";
+import { EditProductModal } from "./EditProductModal";
+import { ImportCSVModal } from "./ImportCSVModal";
+import { SettingsModal } from "./SettingsModal";
+import { ProfileModal } from "./ProfileModal";
+import { useToast } from "@/hooks/use-toast";
 
 interface Product {
   id: string;
@@ -13,6 +20,7 @@ interface Product {
 }
 
 export const ProductSelection = () => {
+  const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>([
     // Sample data - will be replaced with Supabase data
     {
@@ -38,31 +46,101 @@ export const ProductSelection = () => {
     }
   ]);
 
+  // Modal states
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showBreakdownModal, setShowBreakdownModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
   const totalProducts = products.length;
   const totalEmissions = products.reduce((sum, product) => sum + product.totalCO2, 0);
 
   const handleAddProduct = () => {
-    console.log("Add product clicked");
-    // TODO: Open product addition modal/page
+    setShowAddModal(true);
+  };
+
+  const handleAddNewProduct = (newProduct: Product) => {
+    setProducts(prev => [...prev, newProduct]);
+    toast({
+      title: "Product Added",
+      description: `${newProduct.name} has been added successfully.`,
+    });
   };
 
   const handleEditProduct = (id: string) => {
-    console.log("Edit product:", id);
-    // TODO: Open edit modal for product
+    const product = products.find(p => p.id === id);
+    if (product) {
+      setSelectedProduct(product);
+      setShowEditModal(true);
+    }
+  };
+
+  const handleUpdateProduct = (id: string, updatedProduct: Product) => {
+    setProducts(prev => prev.map(p => p.id === id ? updatedProduct : p));
+    toast({
+      title: "Product Updated",
+      description: `${updatedProduct.name} has been updated successfully.`,
+    });
   };
 
   const handleDeleteProduct = (id: string) => {
+    const product = products.find(p => p.id === id);
     setProducts(products.filter(p => p.id !== id));
+    toast({
+      title: "Product Deleted",
+      description: `${product?.name || 'Product'} has been removed.`,
+      variant: "destructive",
+    });
   };
 
   const handleViewProductDetails = (id: string) => {
-    console.log("View details for:", id);
-    // TODO: Navigate to product details/breakdown page
+    const product = products.find(p => p.id === id);
+    if (product) {
+      setSelectedProduct(product);
+      setShowBreakdownModal(true);
+    }
   };
 
   const handleExportReport = () => {
-    console.log("Export report clicked");
-    // TODO: Generate and download report
+    // Generate CSV report
+    const csvContent = [
+      "Product Name,Category,CO2 Emissions (kg),Last Calculated",
+      ...products.map(p => `"${p.name}","${p.category}",${p.totalCO2.toFixed(2)},"${p.lastCalculated}"`)
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `emisia-carbon-report-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+
+    toast({
+      title: "Report Exported",
+      description: "Carbon emissions report has been downloaded.",
+    });
+  };
+
+  const handleImportProducts = (importedProducts: Product[]) => {
+    setProducts(prev => [...prev, ...importedProducts]);
+    toast({
+      title: "Products Imported",
+      description: `${importedProducts.length} products have been imported successfully.`,
+    });
+  };
+
+  const handleShowSettings = () => {
+    setShowSettingsModal(true);
+  };
+
+  const handleShowProfile = () => {
+    setShowProfileModal(true);
   };
 
   return (
@@ -72,6 +150,9 @@ export const ProductSelection = () => {
         totalEmissions={totalEmissions}
         onAddProduct={handleAddProduct}
         onExportReport={handleExportReport}
+        onImportCSV={() => setShowImportModal(true)}
+        onShowSettings={handleShowSettings}
+        onShowProfile={handleShowProfile}
       />
       
       <main className="max-w-7xl mx-auto px-6 py-8">
@@ -101,6 +182,48 @@ export const ProductSelection = () => {
           </motion.div>
         )}
       </main>
+
+      {/* Modals */}
+      <AddProductModal 
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onAddProduct={handleAddNewProduct}
+      />
+
+      <ProductBreakdownModal
+        isOpen={showBreakdownModal}
+        onClose={() => {
+          setShowBreakdownModal(false);
+          setSelectedProduct(null);
+        }}
+        product={selectedProduct}
+      />
+
+      <EditProductModal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setSelectedProduct(null);
+        }}
+        onUpdateProduct={handleUpdateProduct}
+        product={selectedProduct}
+      />
+
+      <ImportCSVModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImportProducts={handleImportProducts}
+      />
+
+      <SettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+      />
+
+      <ProfileModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+      />
     </div>
   );
 };
