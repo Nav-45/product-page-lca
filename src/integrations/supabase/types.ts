@@ -18,28 +18,28 @@ export type Database = {
         Row: {
           activity_name: string | null
           emission_factor: number | null
-          id: number | null
+          id: number
           lca_stage: string | null
           location: string | null
-          scope: string | null
+          scopee: number | null
           unit: string | null
         }
         Insert: {
           activity_name?: string | null
           emission_factor?: number | null
-          id?: number | null
+          id: number
           lca_stage?: string | null
           location?: string | null
-          scope?: string | null
+          scopee?: number | null
           unit?: string | null
         }
         Update: {
           activity_name?: string | null
           emission_factor?: number | null
-          id?: number | null
+          id?: number
           lca_stage?: string | null
           location?: string | null
-          scope?: string | null
+          scopee?: number | null
           unit?: string | null
         }
         Relationships: []
