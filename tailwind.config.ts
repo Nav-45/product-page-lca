@@ -62,13 +62,16 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				carbon: {
-					grey: 'hsl(var(--carbon-grey))',
-					'light-grey': 'hsl(var(--carbon-light-grey))',
-					'dark-grey': 'hsl(var(--carbon-dark-grey))',
-					green: 'hsl(var(--carbon-green))',
-					'light-green': 'hsl(var(--carbon-light-green))',
-					accent: 'hsl(var(--carbon-accent))'
+				emisia: {
+					grey: 'hsl(var(--emisia-grey))',
+					'light-grey': 'hsl(var(--emisia-light-grey))',
+					'dark-grey': 'hsl(var(--emisia-dark-grey))',
+					blue: 'hsl(var(--emisia-blue))',
+					'light-blue': 'hsl(var(--emisia-light-blue))',
+					green: 'hsl(var(--emisia-green))',
+					success: 'hsl(var(--emisia-success))',
+					warning: 'hsl(var(--emisia-warning))',
+					error: 'hsl(var(--emisia-error))'
 				}
 			},
 			borderRadius: {

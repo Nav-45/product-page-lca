@@ -1,11 +1,7 @@
-import { EmissionsIQHero } from "@/components/EmissionsIQHero";
+import { ProductSelection } from "@/components/ProductSelection";
 
 const Index = () => {
-  return (
-    <div className="min-h-screen">
-      <EmissionsIQHero />
-    </div>
-  );
+  return <ProductSelection />;
 };
 
 export default Index;
