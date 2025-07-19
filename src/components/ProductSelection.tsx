@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Header } from "./Header";
 import { ProductGrid } from "./ProductGrid";
@@ -10,6 +10,7 @@ import { ImportCSVModal } from "./ImportCSVModal";
 import { SettingsModal } from "./SettingsModal";
 import { ProfileModal } from "./ProfileModal";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Product {
   id: string;
@@ -17,34 +18,13 @@ interface Product {
   category: string;
   totalCO2: number;
   lastCalculated: string;
+  sku?: string;
 }
 
 export const ProductSelection = () => {
   const { toast } = useToast();
-  const [products, setProducts] = useState<Product[]>([
-    // Sample data - will be replaced with Supabase data
-    {
-      id: "1",
-      name: "Premium Potato Crisps",
-      category: "Snacks",
-      totalCO2: 2.45,
-      lastCalculated: "2 days ago"
-    },
-    {
-      id: "2", 
-      name: "Organic Apple Juice",
-      category: "Beverages",
-      totalCO2: 1.23,
-      lastCalculated: "1 week ago"
-    },
-    {
-      id: "3",
-      name: "Chocolate Cookies",
-      category: "Baked Goods", 
-      totalCO2: 3.67,
-      lastCalculated: "3 days ago"
-    }
-  ]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // Modal states
   const [showAddModal, setShowAddModal] = useState(false);
@@ -55,6 +35,42 @@ export const ProductSelection = () => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
+  // Fetch products from Supabase
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const formattedProducts = data?.map(product => ({
+        id: product.id,
+        name: product.name,
+        category: product.category,
+        totalCO2: Number(product.total_co2) || 0,
+        lastCalculated: new Date(product.updated_at).toLocaleDateString(),
+        sku: product.sku
+      })) || [];
+
+      setProducts(formattedProducts);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load products from database.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const totalProducts = products.length;
   const totalEmissions = products.reduce((sum, product) => sum + product.totalCO2, 0);
 
@@ -63,7 +79,8 @@ export const ProductSelection = () => {
   };
 
   const handleAddNewProduct = (newProduct: Product) => {
-    setProducts(prev => [...prev, newProduct]);
+    // Refresh the products list from Supabase
+    fetchProducts();
     toast({
       title: "Product Added",
       description: `${newProduct.name} has been added successfully.`,
@@ -78,22 +95,70 @@ export const ProductSelection = () => {
     }
   };
 
-  const handleUpdateProduct = (id: string, updatedProduct: Product) => {
-    setProducts(prev => prev.map(p => p.id === id ? updatedProduct : p));
-    toast({
-      title: "Product Updated",
-      description: `${updatedProduct.name} has been updated successfully.`,
-    });
+  const handleUpdateProduct = async (id: string, updatedProduct: Product) => {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({
+          name: updatedProduct.name,
+          category: updatedProduct.category,
+          sku: updatedProduct.sku,
+          total_co2: updatedProduct.totalCO2,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Refresh the products list
+      fetchProducts();
+      toast({
+        title: "Product Updated",
+        description: `${updatedProduct.name} has been updated successfully.`,
+      });
+    } catch (error) {
+      console.error('Error updating product:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update product.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleDeleteProduct = (id: string) => {
+  const handleDeleteProduct = async (id: string) => {
     const product = products.find(p => p.id === id);
-    setProducts(products.filter(p => p.id !== id));
-    toast({
-      title: "Product Deleted",
-      description: `${product?.name || 'Product'} has been removed.`,
-      variant: "destructive",
-    });
+    
+    try {
+      // Delete associated ingredients first
+      await supabase
+        .from('ingredients')
+        .delete()
+        .eq('product_id', id);
+
+      // Then delete the product
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Refresh the products list
+      fetchProducts();
+      toast({
+        title: "Product Deleted",
+        description: `${product?.name || 'Product'} has been removed.`,
+        variant: "destructive",
+      });
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete product.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleViewProductDetails = (id: string) => {
@@ -156,7 +221,11 @@ export const ProductSelection = () => {
       />
       
       <main className="max-w-7xl mx-auto px-6 py-8">
-        {products.length === 0 ? (
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="text-lg text-muted-foreground">Loading products...</div>
+          </div>
+        ) : products.length === 0 ? (
           <EmptyState onAddProduct={handleAddProduct} />
         ) : (
           <motion.div

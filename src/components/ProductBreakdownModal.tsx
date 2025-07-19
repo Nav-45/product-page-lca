@@ -1,9 +1,11 @@
 import { motion } from "framer-motion";
-import { X, Factory, Truck, Package, Recycle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, Factory, Truck, Package, Recycle, Leaf } from "lucide-react";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Progress } from "./ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProductBreakdownModalProps {
   isOpen: boolean;
@@ -13,13 +15,59 @@ interface ProductBreakdownModalProps {
     name: string;
     category: string;
     totalCO2: number;
+    sku?: string;
   } | null;
 }
 
+interface Ingredient {
+  id: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  supplier: string;
+}
+
 export const ProductBreakdownModal = ({ isOpen, onClose, product }: ProductBreakdownModalProps) => {
+  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (product && isOpen) {
+      fetchIngredients();
+    }
+  }, [product, isOpen]);
+
+  const fetchIngredients = async () => {
+    if (!product) return;
+    
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('ingredients')
+        .select('*')
+        .eq('product_id', product.id);
+
+      if (error) throw error;
+
+      const formattedIngredients = data?.map(ingredient => ({
+        id: ingredient.id,
+        name: ingredient.name,
+        quantity: Number(ingredient.quantity) || 0,
+        unit: ingredient.unit || '',
+        supplier: ingredient.supplier || ''
+      })) || [];
+
+      setIngredients(formattedIngredients);
+    } catch (error) {
+      console.error('Error fetching ingredients:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!product) return null;
 
-  // Mock breakdown data - will be replaced with real calculation data
+  // Mock breakdown data - enhanced with real ingredient data
   const breakdown = [
     {
       stage: "Raw Materials",
@@ -94,6 +142,39 @@ export const ProductBreakdownModal = ({ isOpen, onClose, product }: ProductBreak
               </div>
             </CardContent>
           </Card>
+
+          {/* Ingredients Section */}
+          {ingredients.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Leaf className="w-5 h-5 text-green-600" />
+                  Product Ingredients
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="text-center py-4">Loading ingredients...</div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {ingredients.map((ingredient) => (
+                      <div key={ingredient.id} className="p-3 border rounded-lg">
+                        <div className="font-medium">{ingredient.name}</div>
+                        <div className="text-sm text-muted-foreground">
+                          Quantity: {ingredient.quantity} {ingredient.unit}
+                        </div>
+                        {ingredient.supplier && (
+                          <div className="text-sm text-muted-foreground">
+                            Supplier: {ingredient.supplier}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Stage Breakdown */}
           <div className="space-y-4">
