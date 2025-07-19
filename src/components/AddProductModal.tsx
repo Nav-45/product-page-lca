@@ -68,6 +68,14 @@ export const AddProductModal = ({ isOpen, onClose, onAddProduct }: AddProductMod
     e.preventDefault();
     
     try {
+      // Check if user is authenticated, if not sign them in anonymously
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        const { error: authError } = await supabase.auth.signInAnonymously();
+        if (authError) throw authError;
+      }
+
       // Insert product into Supabase
       const { data: product, error: productError } = await supabase
         .from('products')
@@ -76,6 +84,7 @@ export const AddProductModal = ({ isOpen, onClose, onAddProduct }: AddProductMod
           category: formData.category,
           sku: formData.sku || null,
           total_co2: Math.random() * 5 + 1, // Mock calculation for now
+          user_id: (await supabase.auth.getUser()).data.user?.id,
         })
         .select()
         .single();
