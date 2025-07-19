@@ -16,28 +16,31 @@ export type Database = {
     Tables: {
       ingredients: {
         Row: {
-          created_at: string
+          created_at: string | null
+          emission_factor: number | null
           id: string
-          name: string
-          product_id: string
+          name: string | null
+          product_id: string | null
           quantity: number | null
           supplier: string | null
           unit: string | null
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
+          emission_factor?: number | null
           id?: string
-          name: string
-          product_id: string
+          name?: string | null
+          product_id?: string | null
           quantity?: number | null
           supplier?: string | null
           unit?: string | null
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
+          emission_factor?: number | null
           id?: string
-          name?: string
-          product_id?: string
+          name?: string | null
+          product_id?: string | null
           quantity?: number | null
           supplier?: string | null
           unit?: string | null
@@ -52,6 +55,91 @@ export type Database = {
           },
         ]
       }
+      invoice_items: {
+        Row: {
+          date: string | null
+          emission_factor: number | null
+          emissions: number | null
+          id: string
+          invoice_id: string | null
+          lca_stage: string | null
+          matched_activity_id: string | null
+          original_text: string | null
+          quantity: number | null
+          scope: number | null
+          unit: string | null
+        }
+        Insert: {
+          date?: string | null
+          emission_factor?: number | null
+          emissions?: number | null
+          id?: string
+          invoice_id?: string | null
+          lca_stage?: string | null
+          matched_activity_id?: string | null
+          original_text?: string | null
+          quantity?: number | null
+          scope?: number | null
+          unit?: string | null
+        }
+        Update: {
+          date?: string | null
+          emission_factor?: number | null
+          emissions?: number | null
+          id?: string
+          invoice_id?: string | null
+          lca_stage?: string | null
+          matched_activity_id?: string | null
+          original_text?: string | null
+          quantity?: number | null
+          scope?: number | null
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          file_url: string | null
+          filename: string | null
+          id: string
+          status: string | null
+          uploaded_at: string
+          user_id: string | null
+        }
+        Insert: {
+          file_url?: string | null
+          filename?: string | null
+          id?: string
+          status?: string | null
+          uploaded_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          file_url?: string | null
+          filename?: string | null
+          id?: string
+          status?: string | null
+          uploaded_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       own_item_data: {
         Row: {
           activity_name: string | null
@@ -59,16 +147,16 @@ export type Database = {
           id: number
           lca_stage: string | null
           location: string | null
-          scopee: number | null
+          scope: number | null
           unit: string | null
         }
         Insert: {
           activity_name?: string | null
           emission_factor?: number | null
-          id: number
+          id?: number
           lca_stage?: string | null
           location?: string | null
-          scopee?: number | null
+          scope?: number | null
           unit?: string | null
         }
         Update: {
@@ -77,38 +165,93 @@ export type Database = {
           id?: number
           lca_stage?: string | null
           location?: string | null
-          scopee?: number | null
+          scope?: number | null
           unit?: string | null
         }
         Relationships: []
       }
+      packaging: {
+        Row: {
+          id: string
+          name: string | null
+          product_id: string | null
+        }
+        Insert: {
+          id?: string
+          name?: string | null
+          product_id?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string | null
+          product_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "packaging_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
-          category: string
-          created_at: string
+          category: string | null
+          created_at: string | null
           id: string
           name: string
           sku: string | null
           total_co2: number | null
-          updated_at: string
+          updated_at: string | null
+          user_id: string | null
         }
         Insert: {
-          category: string
-          created_at?: string
+          category?: string | null
+          created_at?: string | null
           id?: string
           name: string
           sku?: string | null
           total_co2?: number | null
-          updated_at?: string
+          updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
-          category?: string
-          created_at?: string
+          category?: string | null
+          created_at?: string | null
           id?: string
           name?: string
           sku?: string | null
           total_co2?: number | null
-          updated_at?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          company: string | null
+          email: string | null
+          id: string
+        }
+        Insert: {
+          company?: string | null
+          email?: string | null
+          id: string
+        }
+        Update: {
+          company?: string | null
+          email?: string | null
+          id?: string
         }
         Relationships: []
       }
