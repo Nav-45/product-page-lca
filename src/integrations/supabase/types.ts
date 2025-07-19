@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      ingredients: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          product_id: string
+          quantity: number | null
+          supplier: string | null
+          unit: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          product_id: string
+          quantity?: number | null
+          supplier?: string | null
+          unit?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          product_id?: string
+          quantity?: number | null
+          supplier?: string | null
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ingredients_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       own_item_data: {
         Row: {
           activity_name: string | null
@@ -41,6 +79,36 @@ export type Database = {
           location?: string | null
           scopee?: number | null
           unit?: string | null
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          name: string
+          sku: string | null
+          total_co2: number | null
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          name: string
+          sku?: string | null
+          total_co2?: number | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          name?: string
+          sku?: string | null
+          total_co2?: number | null
+          updated_at?: string
         }
         Relationships: []
       }

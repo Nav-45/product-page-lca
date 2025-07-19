@@ -1,12 +1,20 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { X, Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { Textarea } from "./ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+interface Ingredient {
+  id: string;
+  quantity: string;
+  unit: string;
+  name: string;
+  supplier: string;
+}
 
 interface AddProductModalProps {
   isOpen: boolean;
@@ -18,10 +26,9 @@ export const AddProductModal = ({ isOpen, onClose, onAddProduct }: AddProductMod
   const [formData, setFormData] = useState({
     name: "",
     category: "",
-    description: "",
-    weight: "",
-    volume: "",
+    sku: "",
   });
+  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
 
   const categories = [
     "Snacks",
@@ -33,20 +40,88 @@ export const AddProductModal = ({ isOpen, onClose, onAddProduct }: AddProductMod
     "Canned Goods"
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const units = ["kg", "g", "L", "mL", "pcs", "oz", "lb"];
+
+  const addIngredient = () => {
+    const newIngredient: Ingredient = {
+      id: Date.now().toString(),
+      quantity: "",
+      unit: "kg",
+      name: "",
+      supplier: "",
+    };
+    setIngredients([...ingredients, newIngredient]);
+  };
+
+  const updateIngredient = (id: string, field: keyof Ingredient, value: string) => {
+    setIngredients(ingredients.map(ing => 
+      ing.id === id ? { ...ing, [field]: value } : ing
+    ));
+  };
+
+  const removeIngredient = (id: string) => {
+    setIngredients(ingredients.filter(ing => ing.id !== id));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const newProduct = {
-      id: Date.now().toString(),
-      name: formData.name,
-      category: formData.category,
-      totalCO2: Math.random() * 5 + 1, // Mock calculation
-      lastCalculated: "Just now"
-    };
+    try {
+      // Insert product into Supabase
+      const { data: product, error: productError } = await supabase
+        .from('products')
+        .insert({
+          name: formData.name,
+          category: formData.category,
+          sku: formData.sku || null,
+          total_co2: Math.random() * 5 + 1, // Mock calculation for now
+        })
+        .select()
+        .single();
 
-    onAddProduct(newProduct);
-    onClose();
-    setFormData({ name: "", category: "", description: "", weight: "", volume: "" });
+      if (productError) throw productError;
+
+      // Insert ingredients if any
+      if (ingredients.length > 0) {
+        const ingredientsToInsert = ingredients
+          .filter(ing => ing.name.trim() !== '') // Only insert ingredients with names
+          .map(ing => ({
+            product_id: product.id,
+            quantity: ing.quantity ? parseFloat(ing.quantity) : null,
+            unit: ing.unit,
+            name: ing.name,
+            supplier: ing.supplier || null,
+          }));
+
+        if (ingredientsToInsert.length > 0) {
+          const { error: ingredientsError } = await supabase
+            .from('ingredients')
+            .insert(ingredientsToInsert);
+
+          if (ingredientsError) throw ingredientsError;
+        }
+      }
+
+      // Create product object for local state
+      const newProduct = {
+        id: product.id,
+        name: product.name,
+        category: product.category,
+        sku: product.sku,
+        totalCO2: product.total_co2,
+        lastCalculated: "Just now",
+        ingredients: ingredients.filter(ing => ing.name.trim() !== '')
+      };
+
+      onAddProduct(newProduct);
+      onClose();
+      setFormData({ name: "", category: "", sku: "" });
+      setIngredients([]);
+      toast.success("Product added successfully!");
+    } catch (error) {
+      console.error('Error adding product:', error);
+      toast.error("Failed to add product. Please try again.");
+    }
   };
 
   return (
@@ -61,9 +136,9 @@ export const AddProductModal = ({ isOpen, onClose, onAddProduct }: AddProductMod
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="name">Product Name</Label>
+            <Label htmlFor="add-name">Product Name</Label>
             <Input
-              id="name"
+              id="add-name"
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               placeholder="Enter product name"
@@ -72,7 +147,7 @@ export const AddProductModal = ({ isOpen, onClose, onAddProduct }: AddProductMod
           </div>
 
           <div>
-            <Label htmlFor="category">Category</Label>
+            <Label htmlFor="add-category">Category</Label>
             <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
               <SelectTrigger>
                 <SelectValue placeholder="Select category" />
@@ -88,39 +163,85 @@ export const AddProductModal = ({ isOpen, onClose, onAddProduct }: AddProductMod
           </div>
 
           <div>
-            <Label htmlFor="description">Description (Optional)</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Product description"
-              rows={3}
+            <Label htmlFor="add-sku">Product SKU</Label>
+            <Input
+              id="add-sku"
+              value={formData.sku}
+              onChange={(e) => setFormData(prev => ({ ...prev, sku: e.target.value }))}
+              placeholder="Enter product SKU"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="weight">Weight (kg)</Label>
-              <Input
-                id="weight"
-                type="number"
-                value={formData.weight}
-                onChange={(e) => setFormData(prev => ({ ...prev, weight: e.target.value }))}
-                placeholder="0.0"
-                step="0.01"
-              />
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label>Ingredients</Label>
+              <Button type="button" onClick={addIngredient} size="sm" className="flex items-center gap-1">
+                <Plus className="w-4 h-4" />
+                Add Ingredient
+              </Button>
             </div>
-            <div>
-              <Label htmlFor="volume">Volume (L)</Label>
-              <Input
-                id="volume"
-                type="number"
-                value={formData.volume}
-                onChange={(e) => setFormData(prev => ({ ...prev, volume: e.target.value }))}
-                placeholder="0.0"
-                step="0.01"
-              />
-            </div>
+            
+            {ingredients.length > 0 && (
+              <div className="space-y-3 max-h-48 overflow-y-auto">
+                {ingredients.map((ingredient) => (
+                  <div key={ingredient.id} className="grid grid-cols-4 gap-2 p-3 border rounded-lg bg-secondary/20">
+                    <div>
+                      <Label className="text-xs">Quantity</Label>
+                      <Input
+                        value={ingredient.quantity}
+                        onChange={(e) => updateIngredient(ingredient.id, 'quantity', e.target.value)}
+                        placeholder="0"
+                        className="h-8"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Unit</Label>
+                      <Select value={ingredient.unit} onValueChange={(value) => updateIngredient(ingredient.id, 'unit', value)}>
+                        <SelectTrigger className="h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {units.map(unit => (
+                            <SelectItem key={unit} value={unit}>
+                              {unit}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="col-span-2">
+                      <Label className="text-xs">Ingredient Name</Label>
+                      <Input
+                        value={ingredient.name}
+                        onChange={(e) => updateIngredient(ingredient.id, 'name', e.target.value)}
+                        placeholder="Ingredient name"
+                        className="h-8"
+                      />
+                    </div>
+                    <div className="col-span-3">
+                      <Label className="text-xs">Supplier</Label>
+                      <Input
+                        value={ingredient.supplier}
+                        onChange={(e) => updateIngredient(ingredient.id, 'supplier', e.target.value)}
+                        placeholder="Supplier name"
+                        className="h-8"
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      <Button 
+                        type="button" 
+                        onClick={() => removeIngredient(ingredient.id)}
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end space-x-3 pt-4">
