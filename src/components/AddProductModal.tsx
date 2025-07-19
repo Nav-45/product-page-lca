@@ -1,3 +1,4 @@
+// Fixed Textarea import issue
 import { useState } from "react";
 import { Plus, X } from "lucide-react";
 import { Button } from "./ui/button";
