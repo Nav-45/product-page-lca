@@ -1,10 +1,18 @@
 import { useState, useEffect } from "react";
-import { Edit3 } from "lucide-react";
+import { Edit3, Plus, X } from "lucide-react";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+
+interface Ingredient {
+  id: string;
+  quantity: string;
+  unit: string;
+  name: string;
+  supplier: string;
+}
 
 interface EditProductModalProps {
   isOpen: boolean;
@@ -14,6 +22,8 @@ interface EditProductModalProps {
     id: string;
     name: string;
     category: string;
+    sku?: string;
+    ingredients?: Ingredient[];
     totalCO2: number;
     lastCalculated: string;
   } | null;
@@ -23,7 +33,9 @@ export const EditProductModal = ({ isOpen, onClose, onUpdateProduct, product }: 
   const [formData, setFormData] = useState({
     name: "",
     category: "",
+    sku: "",
   });
+  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
 
   const categories = [
     "Snacks",
@@ -35,14 +47,39 @@ export const EditProductModal = ({ isOpen, onClose, onUpdateProduct, product }: 
     "Canned Goods"
   ];
 
+  const units = ["kg", "g", "L", "mL", "pcs", "oz", "lb"];
+
   useEffect(() => {
     if (product) {
       setFormData({
         name: product.name,
         category: product.category,
+        sku: product.sku || "",
       });
+      setIngredients(product.ingredients || []);
     }
   }, [product]);
+
+  const addIngredient = () => {
+    const newIngredient: Ingredient = {
+      id: Date.now().toString(),
+      quantity: "",
+      unit: "kg",
+      name: "",
+      supplier: "",
+    };
+    setIngredients([...ingredients, newIngredient]);
+  };
+
+  const updateIngredient = (id: string, field: keyof Ingredient, value: string) => {
+    setIngredients(ingredients.map(ing => 
+      ing.id === id ? { ...ing, [field]: value } : ing
+    ));
+  };
+
+  const removeIngredient = (id: string) => {
+    setIngredients(ingredients.filter(ing => ing.id !== id));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +89,8 @@ export const EditProductModal = ({ isOpen, onClose, onUpdateProduct, product }: 
       ...product,
       name: formData.name,
       category: formData.category,
+      sku: formData.sku,
+      ingredients: ingredients,
       lastCalculated: "Just updated"
     };
 
@@ -97,6 +136,88 @@ export const EditProductModal = ({ isOpen, onClose, onUpdateProduct, product }: 
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="edit-sku">Product SKU</Label>
+            <Input
+              id="edit-sku"
+              value={formData.sku}
+              onChange={(e) => setFormData(prev => ({ ...prev, sku: e.target.value }))}
+              placeholder="Enter product SKU"
+            />
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label>Ingredients</Label>
+              <Button type="button" onClick={addIngredient} size="sm" className="flex items-center gap-1">
+                <Plus className="w-4 h-4" />
+                Add Ingredient
+              </Button>
+            </div>
+            
+            {ingredients.length > 0 && (
+              <div className="space-y-3 max-h-48 overflow-y-auto">
+                {ingredients.map((ingredient) => (
+                  <div key={ingredient.id} className="grid grid-cols-4 gap-2 p-3 border rounded-lg bg-secondary/20">
+                    <div>
+                      <Label className="text-xs">Quantity</Label>
+                      <Input
+                        value={ingredient.quantity}
+                        onChange={(e) => updateIngredient(ingredient.id, 'quantity', e.target.value)}
+                        placeholder="0"
+                        className="h-8"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Unit</Label>
+                      <Select value={ingredient.unit} onValueChange={(value) => updateIngredient(ingredient.id, 'unit', value)}>
+                        <SelectTrigger className="h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {units.map(unit => (
+                            <SelectItem key={unit} value={unit}>
+                              {unit}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="col-span-2">
+                      <Label className="text-xs">Ingredient Name</Label>
+                      <Input
+                        value={ingredient.name}
+                        onChange={(e) => updateIngredient(ingredient.id, 'name', e.target.value)}
+                        placeholder="Ingredient name"
+                        className="h-8"
+                      />
+                    </div>
+                    <div className="col-span-3">
+                      <Label className="text-xs">Supplier</Label>
+                      <Input
+                        value={ingredient.supplier}
+                        onChange={(e) => updateIngredient(ingredient.id, 'supplier', e.target.value)}
+                        placeholder="Supplier name"
+                        className="h-8"
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      <Button 
+                        type="button" 
+                        onClick={() => removeIngredient(ingredient.id)}
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="bg-secondary/30 p-3 rounded-lg">
