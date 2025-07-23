@@ -14,6 +14,15 @@ interface Ingredient {
   supplier: string;
 }
 
+interface ValueChainActivity {
+  id: string;
+  stage: string;
+  activity: string;
+  scope: string;
+  factor: string;
+  amount: string;
+}
+
 interface EditProductModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -24,6 +33,7 @@ interface EditProductModalProps {
     category: string;
     sku?: string;
     ingredients?: Ingredient[];
+    valueChainActivities?: ValueChainActivity[];
     totalCO2: number;
     lastCalculated: string;
   } | null;
@@ -36,6 +46,7 @@ export const EditProductModal = ({ isOpen, onClose, onUpdateProduct, product }: 
     sku: "",
   });
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
+  const [valueChainActivities, setValueChainActivities] = useState<ValueChainActivity[]>([]);
 
   const categories = [
     "Snacks",
@@ -48,6 +59,18 @@ export const EditProductModal = ({ isOpen, onClose, onUpdateProduct, product }: 
   ];
 
   const units = ["kg", "g", "L", "mL", "pcs", "oz", "lb"];
+  
+  const lcaStages = [
+    "Raw Materials",
+    "Processing", 
+    "Packaging",
+    "Transportation",
+    "Distribution",
+    "Use Phase",
+    "End of Life"
+  ];
+
+  const scopes = ["Scope 1", "Scope 2", "Scope 3"];
 
   useEffect(() => {
     if (product) {
@@ -57,6 +80,7 @@ export const EditProductModal = ({ isOpen, onClose, onUpdateProduct, product }: 
         sku: product.sku || "",
       });
       setIngredients(product.ingredients || []);
+      setValueChainActivities(product.valueChainActivities || []);
     }
   }, [product]);
 
@@ -81,6 +105,30 @@ export const EditProductModal = ({ isOpen, onClose, onUpdateProduct, product }: 
     setIngredients(ingredients.filter(ing => ing.id !== id));
   };
 
+  const addValueChainActivity = () => {
+    const newActivity: ValueChainActivity = {
+      id: Date.now().toString(),
+      stage: "",
+      activity: "",
+      scope: "",
+      factor: "",
+      amount: "",
+    };
+    setValueChainActivities([...valueChainActivities, newActivity]);
+  };
+
+  const updateValueChainActivity = (id: string, field: keyof ValueChainActivity, value: string) => {
+    setValueChainActivities(activities => 
+      activities.map(activity => 
+        activity.id === id ? { ...activity, [field]: value } : activity
+      )
+    );
+  };
+
+  const removeValueChainActivity = (id: string) => {
+    setValueChainActivities(activities => activities.filter(activity => activity.id !== id));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!product) return;
@@ -91,6 +139,7 @@ export const EditProductModal = ({ isOpen, onClose, onUpdateProduct, product }: 
       category: formData.category,
       sku: formData.sku,
       ingredients: ingredients,
+      valueChainActivities: valueChainActivities,
       lastCalculated: "Just updated"
     };
 
@@ -213,6 +262,93 @@ export const EditProductModal = ({ isOpen, onClose, onUpdateProduct, product }: 
                       >
                         <X className="w-4 h-4" />
                       </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label>Define the Value Chain</Label>
+              <Button type="button" onClick={addValueChainActivity} size="sm" className="flex items-center gap-1">
+                <Plus className="w-4 h-4" />
+                Add Activity
+              </Button>
+            </div>
+            
+            {valueChainActivities.length > 0 && (
+              <div className="space-y-3 max-h-48 overflow-y-auto">
+                {valueChainActivities.map((activity) => (
+                  <div key={activity.id} className="grid grid-cols-5 gap-2 p-3 border rounded-lg bg-secondary/20">
+                    <div>
+                      <Label className="text-xs">LCA Stage</Label>
+                      <Select value={activity.stage} onValueChange={(value) => updateValueChainActivity(activity.id, 'stage', value)}>
+                        <SelectTrigger className="h-8">
+                          <SelectValue placeholder="Select stage" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {lcaStages.map(stage => (
+                            <SelectItem key={stage} value={stage}>
+                              {stage}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Activity</Label>
+                      <Input
+                        value={activity.activity}
+                        onChange={(e) => updateValueChainActivity(activity.id, 'activity', e.target.value)}
+                        placeholder="Activity name"
+                        className="h-8"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Scope</Label>
+                      <Select value={activity.scope} onValueChange={(value) => updateValueChainActivity(activity.id, 'scope', value)}>
+                        <SelectTrigger className="h-8">
+                          <SelectValue placeholder="Scope" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {scopes.map(scope => (
+                            <SelectItem key={scope} value={scope}>
+                              {scope}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Emission Factor</Label>
+                      <Input
+                        value={activity.factor}
+                        onChange={(e) => updateValueChainActivity(activity.id, 'factor', e.target.value)}
+                        placeholder="kg CO2e"
+                        className="h-8"
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <Label className="text-xs">Amount</Label>
+                      <div className="flex gap-1">
+                        <Input
+                          value={activity.amount}
+                          onChange={(e) => updateValueChainActivity(activity.id, 'amount', e.target.value)}
+                          placeholder="Amount"
+                          className="h-8 flex-1"
+                        />
+                        <Button 
+                          type="button" 
+                          onClick={() => removeValueChainActivity(activity.id)}
+                          variant="outline"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}
