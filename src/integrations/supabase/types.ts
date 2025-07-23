@@ -177,7 +177,7 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "lca_classification_product_id_fkey"
-            columns: ["product_name"]
+            columns: ["activity_name"]
             isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["text"]
