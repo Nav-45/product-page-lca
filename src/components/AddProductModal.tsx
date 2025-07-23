@@ -23,6 +23,9 @@ interface ValueChainActivity {
   activity: string;
   scope: string;
   source: string;
+  quantity: string;
+  unit: string;
+  description: string;
 }
 
 interface AddProductModalProps {
@@ -126,20 +129,37 @@ export const AddProductModal = ({ isOpen, onClose, onAddProduct }: AddProductMod
       activity: "",
       scope: "",
       source: "",
+      quantity: "",
+      unit: "kg",
+      description: "",
     };
     setValueChainActivities([...valueChainActivities, newActivity]);
   };
 
-  const updateValueChainActivity = (id: string, field: keyof ValueChainActivity, value: string) => {
+  const addValueChainActivityForStage = (stage: string) => {
+    const newActivity: ValueChainActivity = {
+      id: Date.now().toString(),
+      stage: stage,
+      activity: "",
+      scope: "",
+      source: "",
+      quantity: "",
+      unit: "kg",
+      description: "",
+    };
+    setValueChainActivities([...valueChainActivities, newActivity]);
+  };
+
+  const updateValueChainActivity = (index: number, field: keyof ValueChainActivity, value: string) => {
     setValueChainActivities(activities => 
-      activities.map(activity => 
-        activity.id === id ? { ...activity, [field]: value } : activity
+      activities.map((activity, i) => 
+        i === index ? { ...activity, [field]: value } : activity
       )
     );
   };
 
-  const removeValueChainActivity = (id: string) => {
-    setValueChainActivities(activities => activities.filter(activity => activity.id !== id));
+  const removeValueChainActivity = (index: number) => {
+    setValueChainActivities(activities => activities.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -379,84 +399,373 @@ export const AddProductModal = ({ isOpen, onClose, onAddProduct }: AddProductMod
             )}
           </div>
 
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label>Define the Value Chain</Label>
-              <Button type="button" onClick={addValueChainActivity} size="sm" className="flex items-center gap-1">
-                <Plus className="w-4 h-4" />
-                Add Activity
-              </Button>
-            </div>
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Define the Value Chain</h3>
             
-            {valueChainActivities.length > 0 && (
-              <div className="space-y-3 max-h-48 overflow-y-auto">
-                {valueChainActivities.map((activity) => (
-                  <div key={activity.id} className="space-y-3 p-3 border rounded-lg bg-secondary/20">
+            {/* Raw Materials Section */}
+            <div className="border rounded-lg p-4 space-y-3">
+              <h4 className="font-medium text-primary">Raw Materials</h4>
+              {valueChainActivities
+                .map((activity, index) => ({ ...activity, index }))
+                .filter(activity => activity.stage === 'Raw Materials')
+                .map(({ index, ...activity }) => (
+                <div key={activity.id} className="space-y-2 bg-muted/50 p-3 rounded">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor={`activity-${index}`}>Activity</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => removeValueChainActivity(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <Input
+                    id={`activity-${index}`}
+                    placeholder="e.g., Steel extraction, Cotton harvesting"
+                    value={activity.activity}
+                    onChange={(e) => updateValueChainActivity(index, 'activity', e.target.value)}
+                  />
+                  <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <Label className="text-xs">Activity</Label>
+                      <Label htmlFor={`quantity-${index}`}>Quantity</Label>
                       <Input
-                        value={activity.activity}
-                        onChange={(e) => updateValueChainActivity(activity.id, 'activity', e.target.value)}
-                        placeholder="Activity name"
-                        className="h-8"
+                        id={`quantity-${index}`}
+                        type="number"
+                        placeholder="100"
+                        value={activity.quantity}
+                        onChange={(e) => updateValueChainActivity(index, 'quantity', e.target.value)}
                       />
                     </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      <div>
-                        <Label className="text-xs">LCA Stage</Label>
-                        <Select value={activity.stage} onValueChange={(value) => updateValueChainActivity(activity.id, 'stage', value)}>
-                          <SelectTrigger className="h-8">
-                            <SelectValue placeholder="Select stage" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {lcaStages.map(stage => (
-                              <SelectItem key={stage} value={stage}>
-                                {stage}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label className="text-xs">Scope</Label>
-                        <Select value={activity.scope} onValueChange={(value) => updateValueChainActivity(activity.id, 'scope', value)}>
-                          <SelectTrigger className="h-8">
-                            <SelectValue placeholder="Scope" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {scopes.map(scope => (
-                              <SelectItem key={scope} value={scope}>
-                                {scope}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="flex flex-col">
-                        <Label className="text-xs">Source</Label>
-                        <div className="flex gap-1">
-                          <Input
-                            value={activity.source}
-                            onChange={(e) => updateValueChainActivity(activity.id, 'source', e.target.value)}
-                            placeholder="Source"
-                            className="h-8 flex-1"
-                          />
-                          <Button 
-                            type="button" 
-                            onClick={() => removeValueChainActivity(activity.id)}
-                            variant="outline"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
+                    <div>
+                      <Label htmlFor={`unit-${index}`}>Unit</Label>
+                      <Select value={activity.unit} onValueChange={(value) => updateValueChainActivity(index, 'unit', value)}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {units.map(unit => (
+                            <SelectItem key={unit} value={unit}>
+                              {unit}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
+                  <Label htmlFor={`description-${index}`}>Description (Optional)</Label>
+                  <textarea
+                    id={`description-${index}`}
+                    className="w-full p-2 border border-input rounded-md"
+                    placeholder="Additional details about this activity"
+                    value={activity.description}
+                    onChange={(e) => updateValueChainActivity(index, 'description', e.target.value)}
+                  />
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => addValueChainActivityForStage('Raw Materials')}
+                className="w-full"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Raw Materials Activity
+              </Button>
+            </div>
+
+            {/* Processing Section */}
+            <div className="border rounded-lg p-4 space-y-3">
+              <h4 className="font-medium text-primary">Processing</h4>
+              {valueChainActivities
+                .map((activity, index) => ({ ...activity, index }))
+                .filter(activity => activity.stage === 'Processing')
+                .map(({ index, ...activity }) => (
+                <div key={activity.id} className="space-y-2 bg-muted/50 p-3 rounded">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor={`activity-${index}`}>Activity</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => removeValueChainActivity(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <Input
+                    id={`activity-${index}`}
+                    placeholder="e.g., Manufacturing, Assembly, Production"
+                    value={activity.activity}
+                    onChange={(e) => updateValueChainActivity(index, 'activity', e.target.value)}
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label htmlFor={`quantity-${index}`}>Quantity</Label>
+                      <Input
+                        id={`quantity-${index}`}
+                        type="number"
+                        placeholder="100"
+                        value={activity.quantity}
+                        onChange={(e) => updateValueChainActivity(index, 'quantity', e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor={`unit-${index}`}>Unit</Label>
+                      <Select value={activity.unit} onValueChange={(value) => updateValueChainActivity(index, 'unit', value)}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {units.map(unit => (
+                            <SelectItem key={unit} value={unit}>
+                              {unit}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <Label htmlFor={`description-${index}`}>Description (Optional)</Label>
+                  <textarea
+                    id={`description-${index}`}
+                    className="w-full p-2 border border-input rounded-md"
+                    placeholder="Additional details about this activity"
+                    value={activity.description}
+                    onChange={(e) => updateValueChainActivity(index, 'description', e.target.value)}
+                  />
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => addValueChainActivityForStage('Processing')}
+                className="w-full"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Processing Activity
+              </Button>
+            </div>
+
+            {/* Packaging Section */}
+            <div className="border rounded-lg p-4 space-y-3">
+              <h4 className="font-medium text-primary">Packaging</h4>
+              {valueChainActivities
+                .map((activity, index) => ({ ...activity, index }))
+                .filter(activity => activity.stage === 'Packaging')
+                .map(({ index, ...activity }) => (
+                <div key={activity.id} className="space-y-2 bg-muted/50 p-3 rounded">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor={`activity-${index}`}>Activity</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => removeValueChainActivity(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <Input
+                    id={`activity-${index}`}
+                    placeholder="e.g., Cardboard packaging, Plastic wrapping"
+                    value={activity.activity}
+                    onChange={(e) => updateValueChainActivity(index, 'activity', e.target.value)}
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label htmlFor={`quantity-${index}`}>Quantity</Label>
+                      <Input
+                        id={`quantity-${index}`}
+                        type="number"
+                        placeholder="100"
+                        value={activity.quantity}
+                        onChange={(e) => updateValueChainActivity(index, 'quantity', e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor={`unit-${index}`}>Unit</Label>
+                      <Select value={activity.unit} onValueChange={(value) => updateValueChainActivity(index, 'unit', value)}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {units.map(unit => (
+                            <SelectItem key={unit} value={unit}>
+                              {unit}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <Label htmlFor={`description-${index}`}>Description (Optional)</Label>
+                  <textarea
+                    id={`description-${index}`}
+                    className="w-full p-2 border border-input rounded-md"
+                    placeholder="Additional details about this activity"
+                    value={activity.description}
+                    onChange={(e) => updateValueChainActivity(index, 'description', e.target.value)}
+                  />
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => addValueChainActivityForStage('Packaging')}
+                className="w-full"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Packaging Activity
+              </Button>
+            </div>
+
+            {/* Transportation Section */}
+            <div className="border rounded-lg p-4 space-y-3">
+              <h4 className="font-medium text-primary">Transportation</h4>
+              {valueChainActivities
+                .map((activity, index) => ({ ...activity, index }))
+                .filter(activity => activity.stage === 'Transportation')
+                .map(({ index, ...activity }) => (
+                <div key={activity.id} className="space-y-2 bg-muted/50 p-3 rounded">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor={`activity-${index}`}>Activity</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => removeValueChainActivity(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <Input
+                    id={`activity-${index}`}
+                    placeholder="e.g., Truck delivery, Air freight, Shipping"
+                    value={activity.activity}
+                    onChange={(e) => updateValueChainActivity(index, 'activity', e.target.value)}
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label htmlFor={`quantity-${index}`}>Quantity</Label>
+                      <Input
+                        id={`quantity-${index}`}
+                        type="number"
+                        placeholder="100"
+                        value={activity.quantity}
+                        onChange={(e) => updateValueChainActivity(index, 'quantity', e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor={`unit-${index}`}>Unit</Label>
+                      <Select value={activity.unit} onValueChange={(value) => updateValueChainActivity(index, 'unit', value)}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {units.map(unit => (
+                            <SelectItem key={unit} value={unit}>
+                              {unit}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <Label htmlFor={`description-${index}`}>Description (Optional)</Label>
+                  <textarea
+                    id={`description-${index}`}
+                    className="w-full p-2 border border-input rounded-md"
+                    placeholder="Additional details about this activity"
+                    value={activity.description}
+                    onChange={(e) => updateValueChainActivity(index, 'description', e.target.value)}
+                  />
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => addValueChainActivityForStage('Transportation')}
+                className="w-full"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Transportation Activity
+              </Button>
+            </div>
+
+            {/* End of Life Section */}
+            <div className="border rounded-lg p-4 space-y-3">
+              <h4 className="font-medium text-primary">End of Life</h4>
+              {valueChainActivities
+                .map((activity, index) => ({ ...activity, index }))
+                .filter(activity => activity.stage === 'End of Life')
+                .map(({ index, ...activity }) => (
+                <div key={activity.id} className="space-y-2 bg-muted/50 p-3 rounded">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor={`activity-${index}`}>Activity</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => removeValueChainActivity(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <Input
+                    id={`activity-${index}`}
+                    placeholder="e.g., Recycling, Disposal, Landfill"
+                    value={activity.activity}
+                    onChange={(e) => updateValueChainActivity(index, 'activity', e.target.value)}
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label htmlFor={`quantity-${index}`}>Quantity</Label>
+                      <Input
+                        id={`quantity-${index}`}
+                        type="number"
+                        placeholder="100"
+                        value={activity.quantity}
+                        onChange={(e) => updateValueChainActivity(index, 'quantity', e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor={`unit-${index}`}>Unit</Label>
+                      <Select value={activity.unit} onValueChange={(value) => updateValueChainActivity(index, 'unit', value)}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {units.map(unit => (
+                            <SelectItem key={unit} value={unit}>
+                              {unit}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <Label htmlFor={`description-${index}`}>Description (Optional)</Label>
+                  <textarea
+                    id={`description-${index}`}
+                    className="w-full p-2 border border-input rounded-md"
+                    placeholder="Additional details about this activity"
+                    value={activity.description}
+                    onChange={(e) => updateValueChainActivity(index, 'description', e.target.value)}
+                  />
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => addValueChainActivityForStage('End of Life')}
+                className="w-full"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add End of Life Activity
+              </Button>
+            </div>
           </div>
 
           <div className="flex justify-end space-x-3 pt-4">
