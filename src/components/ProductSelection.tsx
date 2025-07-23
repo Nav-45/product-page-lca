@@ -130,11 +130,11 @@ export const ProductSelection = () => {
     const product = products.find(p => p.id === id);
     
     try {
-      // Delete associated ingredients first
-      await supabase
-        .from('ingredients')
-        .delete()
-        .eq('product_id', id);
+      // Delete associated data in order (foreign key dependencies)
+      await supabase.from('lca_classification').delete().eq('product_id', id);
+      await supabase.from('value_chain_entries').delete().eq('product_id', id);
+      await supabase.from('packaging').delete().eq('product_id', id);
+      await supabase.from('ingredients').delete().eq('product_id', id);
 
       // Then delete the product
       const { error } = await supabase

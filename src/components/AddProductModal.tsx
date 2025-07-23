@@ -251,7 +251,7 @@ export const AddProductModal = ({ isOpen, onClose, onAddProduct }: AddProductMod
               .from('lca_classification')
               .insert(classificationsToInsert);
 
-            if (classificationsError) throw classificationsError;
+          if (classificationsError) throw classificationsError;
           }
         }
       }
