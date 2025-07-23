@@ -156,6 +156,28 @@ export const AddProductModal = ({ isOpen, onClose, onAddProduct }: AddProductMod
         }
       }
 
+      // Insert value chain activities if any
+      if (valueChainActivities.length > 0) {
+        const activitiesToInsert = valueChainActivities
+          .filter(activity => activity.activity.trim() !== '') // Only insert activities with names
+          .map(activity => ({
+            product_id: product.id,
+            stage: activity.stage || null,
+            activity: activity.activity,
+            scope: activity.scope ? parseInt(activity.scope.replace('Scope ', '')) : null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }));
+
+        if (activitiesToInsert.length > 0) {
+          const { error: activitiesError } = await supabase
+            .from('value_chain_entries')
+            .insert(activitiesToInsert);
+
+          if (activitiesError) throw activitiesError;
+        }
+      }
+
       // Create product object for local state
       const newProduct = {
         id: product.id,

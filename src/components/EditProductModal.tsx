@@ -5,6 +5,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface Ingredient {
   id: string;
@@ -79,9 +81,32 @@ export const EditProductModal = ({ isOpen, onClose, onUpdateProduct, product }: 
         sku: product.sku || "",
       });
       setIngredients(product.ingredients || []);
-      setValueChainActivities(product.valueChainActivities || []);
+      loadValueChainActivities(product.id);
     }
   }, [product]);
+
+  const loadValueChainActivities = async (productId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('value_chain_entries')
+        .select('*')
+        .eq('product_id', productId);
+
+      if (error) throw error;
+
+      const activities = data?.map(entry => ({
+        id: entry.id,
+        stage: entry.stage || "",
+        activity: entry.activity,
+        scope: entry.scope ? `Scope ${entry.scope}` : "",
+        source: "", // This field doesn't exist in DB yet, keeping for UI compatibility
+      })) || [];
+
+      setValueChainActivities(activities);
+    } catch (error) {
+      console.error('Error loading value chain activities:', error);
+    }
+  };
 
   const addIngredient = () => {
     const newIngredient: Ingredient = {
@@ -127,22 +152,70 @@ export const EditProductModal = ({ isOpen, onClose, onUpdateProduct, product }: 
     setValueChainActivities(activities => activities.filter(activity => activity.id !== id));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!product) return;
     
-    const updatedProduct = {
-      ...product,
-      name: formData.name,
-      category: formData.category,
-      sku: formData.sku,
-      ingredients: ingredients,
-      valueChainActivities: valueChainActivities,
-      lastCalculated: "Just updated"
-    };
+    try {
+      // Update product in database
+      const { error: productError } = await supabase
+        .from('products')
+        .update({
+          name: formData.name,
+          category: formData.category,
+          sku: formData.sku || null,
+        })
+        .eq('id', product.id);
 
-    onUpdateProduct(product.id, updatedProduct);
-    onClose();
+      if (productError) throw productError;
+
+      // Handle value chain activities - first delete existing ones, then insert new ones
+      const { error: deleteError } = await supabase
+        .from('value_chain_entries')
+        .delete()
+        .eq('product_id', product.id);
+
+      if (deleteError) throw deleteError;
+
+      // Insert new value chain activities
+      if (valueChainActivities.length > 0) {
+        const activitiesToInsert = valueChainActivities
+          .filter(activity => activity.activity.trim() !== '')
+          .map(activity => ({
+            product_id: product.id,
+            stage: activity.stage || null,
+            activity: activity.activity,
+            scope: activity.scope ? parseInt(activity.scope.replace('Scope ', '')) : null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }));
+
+        if (activitiesToInsert.length > 0) {
+          const { error: activitiesError } = await supabase
+            .from('value_chain_entries')
+            .insert(activitiesToInsert);
+
+          if (activitiesError) throw activitiesError;
+        }
+      }
+
+      const updatedProduct = {
+        ...product,
+        name: formData.name,
+        category: formData.category,
+        sku: formData.sku,
+        ingredients: ingredients,
+        valueChainActivities: valueChainActivities,
+        lastCalculated: "Just updated"
+      };
+
+      onUpdateProduct(product.id, updatedProduct);
+      onClose();
+      toast.success("Product updated successfully!");
+    } catch (error) {
+      console.error('Error updating product:', error);
+      toast.error("Failed to update product. Please try again.");
+    }
   };
 
   if (!product) return null;
