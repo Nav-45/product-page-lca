@@ -127,7 +127,7 @@ export const AddProductModal = ({ isOpen, onClose, onAddProduct }: AddProductMod
           name: formData.name,
           category: formData.category,
           sku: formData.sku || null,
-          total_co2: quantity * 0.45, // Mock calculation for now
+          total_co2: 0, // Will be calculated from ingredients and activities
           user_id: (await supabase.auth.getUser()).data.user?.id,
         })
         .select()
