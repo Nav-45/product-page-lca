@@ -64,32 +64,18 @@ export const Header = ({
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
           {/* Logo and navigation */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-6">
-              <motion.div 
-                className="flex items-center space-x-3"
-                whileHover={{ scale: 1.02 }}
-              >
-                <div className="w-10 h-10 bg-gradient-to-br from-primary to-emisia-success rounded-lg flex items-center justify-center">
-                  <span className="text-primary-foreground font-bold text-lg">E</span>
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-foreground">Emisia</h1>
-                  <p className="text-sm text-muted-foreground">Carbon Calculator</p>
-                </div>
-              </motion.div>
-              
-              {/* Sign In button when not authenticated */}
-              {!user && (
-                <Button 
-                  variant="outline" 
-                  onClick={handleSignIn}
-                  className="gap-2 border-emisia-success text-emisia-success hover:bg-emisia-success hover:text-white"
-                >
-                  <LogIn className="w-4 h-4" />
-                  Sign In
-                </Button>
-              )}
-            </div>
+            <motion.div 
+              className="flex items-center space-x-3"
+              whileHover={{ scale: 1.02 }}
+            >
+              <div className="w-10 h-10 bg-gradient-to-br from-primary to-emisia-success rounded-lg flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-lg">E</span>
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">Emisia</h1>
+                <p className="text-sm text-muted-foreground">Carbon Calculator</p>
+              </div>
+            </motion.div>
             
             {/* Mobile user menu - only show when authenticated */}
             {user && (
@@ -131,48 +117,59 @@ export const Header = ({
             </motion.div>
           )}
           
-          {/* Action buttons - only show when authenticated */}
-          {user && (
-            <div className="flex items-center space-x-3">
-              {totalProducts > 0 && (
+          {/* Action buttons or Sign In button */}
+          <div className="flex items-center space-x-3">
+            {user ? (
+              <>
+                {totalProducts > 0 && (
+                  <Button 
+                    variant="outline" 
+                    onClick={onExportReport}
+                    className="gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Export Report
+                  </Button>
+                )}
+                
                 <Button 
-                  variant="outline" 
-                  onClick={onExportReport}
+                  variant="outline"
+                  onClick={onImportCSV}
                   className="gap-2"
                 >
-                  <Download className="w-4 h-4" />
-                  Export Report
+                  <Upload className="w-4 h-4" />
+                  Import CSV
                 </Button>
-              )}
-              
+                
+                <Button 
+                  onClick={onAddProduct}
+                  className="gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Product
+                </Button>
+                
+                {/* Desktop user menu */}
+                <div className="hidden lg:flex items-center space-x-2">
+                  <Button variant="ghost" size="sm" onClick={onShowSettings}>
+                    <Settings className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={onShowProfile}>
+                    <User className="w-4 h-4" />
+                  </Button>
+                </div>
+              </>
+            ) : (
               <Button 
-                variant="outline"
-                onClick={onImportCSV}
-                className="gap-2"
+                variant="outline" 
+                onClick={handleSignIn}
+                className="gap-2 border-emisia-success text-emisia-success hover:bg-emisia-success hover:text-white"
               >
-                <Upload className="w-4 h-4" />
-                Import CSV
+                <LogIn className="w-4 h-4" />
+                Sign In
               </Button>
-              
-              <Button 
-                onClick={onAddProduct}
-                className="gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Add Product
-              </Button>
-              
-              {/* Desktop user menu */}
-              <div className="hidden lg:flex items-center space-x-2">
-                <Button variant="ghost" size="sm" onClick={onShowSettings}>
-                  <Settings className="w-4 h-4" />
-                </Button>
-                <Button variant="ghost" size="sm" onClick={onShowProfile}>
-                  <User className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </motion.header>
