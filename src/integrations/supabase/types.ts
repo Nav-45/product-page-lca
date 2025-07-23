@@ -140,11 +140,55 @@ export type Database = {
           },
         ]
       }
+      lca_classification: {
+        Row: {
+          activity_name: string
+          activity_type: string
+          created_at: string
+          id: string
+          lca_stage: string | null
+          product_id: string | null
+          scope: number | null
+          source: string
+          unit: string | null
+        }
+        Insert: {
+          activity_name: string
+          activity_type: string
+          created_at?: string
+          id?: string
+          lca_stage?: string | null
+          product_id?: string | null
+          scope?: number | null
+          source: string
+          unit?: string | null
+        }
+        Update: {
+          activity_name?: string
+          activity_type?: string
+          created_at?: string
+          id?: string
+          lca_stage?: string | null
+          product_id?: string | null
+          scope?: number | null
+          source?: string
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lca_classification_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       own_item_data: {
         Row: {
           activity_name: string | null
           emission_factor: number | null
-          id: number
+          id: string
           lca_stage: string | null
           location: string | null
           scope: number | null
@@ -153,7 +197,7 @@ export type Database = {
         Insert: {
           activity_name?: string | null
           emission_factor?: number | null
-          id?: number
+          id?: string
           lca_stage?: string | null
           location?: string | null
           scope?: number | null
@@ -162,7 +206,7 @@ export type Database = {
         Update: {
           activity_name?: string | null
           emission_factor?: number | null
-          id?: number
+          id?: string
           lca_stage?: string | null
           location?: string | null
           scope?: number | null
@@ -240,16 +284,19 @@ export type Database = {
       users: {
         Row: {
           company: string | null
+          created_at: string | null
           email: string | null
           id: string
         }
         Insert: {
           company?: string | null
+          created_at?: string | null
           email?: string | null
           id: string
         }
         Update: {
           company?: string | null
+          created_at?: string | null
           email?: string | null
           id?: string
         }
