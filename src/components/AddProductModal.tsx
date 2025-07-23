@@ -22,7 +22,7 @@ interface ValueChainActivity {
   stage: string;
   activity: string;
   scope: string;
-  amount: string;
+  source: string;
 }
 
 interface AddProductModalProps {
@@ -91,7 +91,7 @@ export const AddProductModal = ({ isOpen, onClose, onAddProduct }: AddProductMod
       stage: "",
       activity: "",
       scope: "",
-      amount: "",
+      source: "",
     };
     setValueChainActivities([...valueChainActivities, newActivity]);
   };
@@ -353,12 +353,12 @@ export const AddProductModal = ({ isOpen, onClose, onAddProduct }: AddProductMod
                         </Select>
                       </div>
                       <div className="flex flex-col">
-                        <Label className="text-xs">Amount</Label>
+                        <Label className="text-xs">Source</Label>
                         <div className="flex gap-1">
                           <Input
-                            value={activity.amount}
-                            onChange={(e) => updateValueChainActivity(activity.id, 'amount', e.target.value)}
-                            placeholder="Amount"
+                            value={activity.source}
+                            onChange={(e) => updateValueChainActivity(activity.id, 'source', e.target.value)}
+                            placeholder="Source"
                             className="h-8 flex-1"
                           />
                           <Button 
