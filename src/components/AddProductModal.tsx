@@ -22,7 +22,6 @@ interface ValueChainActivity {
   stage: string;
   activity: string;
   scope: string;
-  factor: string;
   amount: string;
 }
 
@@ -92,7 +91,6 @@ export const AddProductModal = ({ isOpen, onClose, onAddProduct }: AddProductMod
       stage: "",
       activity: "",
       scope: "",
-      factor: "",
       amount: "",
     };
     setValueChainActivities([...valueChainActivities, newActivity]);
@@ -313,22 +311,7 @@ export const AddProductModal = ({ isOpen, onClose, onAddProduct }: AddProductMod
             {valueChainActivities.length > 0 && (
               <div className="space-y-3 max-h-48 overflow-y-auto">
                 {valueChainActivities.map((activity) => (
-                  <div key={activity.id} className="grid grid-cols-5 gap-2 p-3 border rounded-lg bg-secondary/20">
-                    <div>
-                      <Label className="text-xs">LCA Stage</Label>
-                      <Select value={activity.stage} onValueChange={(value) => updateValueChainActivity(activity.id, 'stage', value)}>
-                        <SelectTrigger className="h-8">
-                          <SelectValue placeholder="Select stage" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {lcaStages.map(stage => (
-                            <SelectItem key={stage} value={stage}>
-                              {stage}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  <div key={activity.id} className="space-y-3 p-3 border rounded-lg bg-secondary/20">
                     <div>
                       <Label className="text-xs">Activity</Label>
                       <Input
@@ -338,48 +321,56 @@ export const AddProductModal = ({ isOpen, onClose, onAddProduct }: AddProductMod
                         className="h-8"
                       />
                     </div>
-                    <div>
-                      <Label className="text-xs">Scope</Label>
-                      <Select value={activity.scope} onValueChange={(value) => updateValueChainActivity(activity.id, 'scope', value)}>
-                        <SelectTrigger className="h-8">
-                          <SelectValue placeholder="Scope" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {scopes.map(scope => (
-                            <SelectItem key={scope} value={scope}>
-                              {scope}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label className="text-xs">Emission Factor</Label>
-                      <Input
-                        value={activity.factor}
-                        onChange={(e) => updateValueChainActivity(activity.id, 'factor', e.target.value)}
-                        placeholder="kg CO2e"
-                        className="h-8"
-                      />
-                    </div>
-                    <div className="flex flex-col">
-                      <Label className="text-xs">Amount</Label>
-                      <div className="flex gap-1">
-                        <Input
-                          value={activity.amount}
-                          onChange={(e) => updateValueChainActivity(activity.id, 'amount', e.target.value)}
-                          placeholder="Amount"
-                          className="h-8 flex-1"
-                        />
-                        <Button 
-                          type="button" 
-                          onClick={() => removeValueChainActivity(activity.id)}
-                          variant="outline"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <Label className="text-xs">LCA Stage</Label>
+                        <Select value={activity.stage} onValueChange={(value) => updateValueChainActivity(activity.id, 'stage', value)}>
+                          <SelectTrigger className="h-8">
+                            <SelectValue placeholder="Select stage" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {lcaStages.map(stage => (
+                              <SelectItem key={stage} value={stage}>
+                                {stage}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-xs">Scope</Label>
+                        <Select value={activity.scope} onValueChange={(value) => updateValueChainActivity(activity.id, 'scope', value)}>
+                          <SelectTrigger className="h-8">
+                            <SelectValue placeholder="Scope" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {scopes.map(scope => (
+                              <SelectItem key={scope} value={scope}>
+                                {scope}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex flex-col">
+                        <Label className="text-xs">Amount</Label>
+                        <div className="flex gap-1">
+                          <Input
+                            value={activity.amount}
+                            onChange={(e) => updateValueChainActivity(activity.id, 'amount', e.target.value)}
+                            placeholder="Amount"
+                            className="h-8 flex-1"
+                          />
+                          <Button 
+                            type="button" 
+                            onClick={() => removeValueChainActivity(activity.id)}
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
