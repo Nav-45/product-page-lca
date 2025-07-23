@@ -92,6 +92,7 @@ export const AddProductModal = ({ isOpen, onClose, onAddProduct }: AddProductMod
       stage: "",
       activity: "",
       scope: "",
+      factor: "",
       amount: "",
     };
     setValueChainActivities([...valueChainActivities, newActivity]);
