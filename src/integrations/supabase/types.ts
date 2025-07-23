@@ -177,10 +177,10 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "lca_classification_product_id_fkey"
-            columns: ["product_id"]
+            columns: ["product_name"]
             isOneToOne: false
             referencedRelation: "products"
-            referencedColumns: ["id"]
+            referencedColumns: ["text"]
           },
         ]
       }
