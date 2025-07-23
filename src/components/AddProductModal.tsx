@@ -281,7 +281,7 @@ export const AddProductModal = ({ isOpen, onClose, onAddProduct }: AddProductMod
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Plus className="w-5 h-5" />
@@ -289,7 +289,8 @@ export const AddProductModal = ({ isOpen, onClose, onAddProduct }: AddProductMod
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="overflow-y-auto flex-1 pr-2">
+          <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="add-name">Product Name</Label>
             <Input
@@ -767,16 +768,17 @@ export const AddProductModal = ({ isOpen, onClose, onAddProduct }: AddProductMod
               </Button>
             </div>
           </div>
-
-          <div className="flex justify-end space-x-3 pt-4">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={!formData.name || !formData.category}>
-              Add Product
-            </Button>
-          </div>
-        </form>
+          </form>
+        </div>
+        
+        <div className="flex justify-end space-x-3 pt-4 border-t bg-background">
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={!formData.name || !formData.category}>
+            Add Product
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
