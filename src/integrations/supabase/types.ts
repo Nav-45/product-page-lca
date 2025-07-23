@@ -177,10 +177,10 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "lca_classification_product_id_fkey"
-            columns: ["activity_name"]
+            columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
-            referencedColumns: ["text"]
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -301,6 +301,59 @@ export type Database = {
           id?: string
         }
         Relationships: []
+      }
+      value_chain_entries: {
+        Row: {
+          activity: string
+          created_at: string
+          description: string | null
+          emission_factor: number | null
+          emissions: number | null
+          id: string
+          product_id: string | null
+          quantity: number | null
+          scope: number | null
+          stage: string
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          activity: string
+          created_at?: string
+          description?: string | null
+          emission_factor?: number | null
+          emissions?: number | null
+          id?: string
+          product_id?: string | null
+          quantity?: number | null
+          scope?: number | null
+          stage: string
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          activity?: string
+          created_at?: string
+          description?: string | null
+          emission_factor?: number | null
+          emissions?: number | null
+          id?: string
+          product_id?: string | null
+          quantity?: number | null
+          scope?: number | null
+          stage?: string
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "value_chain_entries_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
