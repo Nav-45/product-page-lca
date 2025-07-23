@@ -218,9 +218,12 @@ export const AddProductModal = ({ isOpen, onClose, onAddProduct }: AddProductMod
             product_id: product.id,
             stage: activity.stage || null,
             activity: activity.activity,
+            description: activity.description || null,
+            quantity: activity.quantity ? parseFloat(activity.quantity) : null,
+            unit: activity.unit || null,
+            emission_factor: null, // Will be calculated later
+            emissions: null, // Will be calculated later
             scope: activity.scope ? parseInt(activity.scope.replace('Scope ', '')) : null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
           }));
 
         if (activitiesToInsert.length > 0) {
@@ -228,7 +231,10 @@ export const AddProductModal = ({ isOpen, onClose, onAddProduct }: AddProductMod
             .from('value_chain_entries')
             .insert(activitiesToInsert);
 
-          if (activitiesError) throw activitiesError;
+          if (activitiesError) {
+            console.error('Error inserting value chain entries:', activitiesError);
+            throw activitiesError;
+          }
 
           // Classify and insert into lca_classification table
           const classificationsToInsert = valueChainActivities

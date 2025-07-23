@@ -238,42 +238,29 @@ export const EditProductModal = ({ isOpen, onClose, onUpdateProduct, product }: 
 
       // Insert new value chain activities
       if (valueChainActivities.length > 0) {
-        const activitiesToInsert = await Promise.all(
-          valueChainActivities
-            .filter(activity => activity.activity.trim() !== '')
-            .map(async (activity) => {
-              // Get emission factor from own_item_data table
-              const { data: emissionData } = await supabase
-                .from('own_item_data')
-                .select('emission_factor')
-                .eq('activity_name', activity.activity)
-                .single();
-
-              const quantity = activity.quantity ? parseFloat(activity.quantity) : null;
-              const emissionFactor = emissionData?.emission_factor || null;
-              const emissions = quantity && emissionFactor ? quantity * emissionFactor : null;
-
-              return {
-                product_id: product.id,
-                stage: activity.stage || null,
-                activity: activity.activity,
-                quantity: quantity,
-                unit: activity.unit,
-                emission_factor: emissionFactor,
-                emissions: emissions,
-                scope: activity.scope ? parseInt(activity.scope.replace('Scope ', '')) : null,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-              };
-            })
-        );
+        const activitiesToInsert = valueChainActivities
+          .filter(activity => activity.activity.trim() !== '')
+          .map(activity => ({
+            product_id: product.id,
+            stage: activity.stage || null,
+            activity: activity.activity,
+            description: activity.description || null,
+            quantity: activity.quantity ? parseFloat(activity.quantity) : null,
+            unit: activity.unit || null,
+            emission_factor: null, // Will be calculated later
+            emissions: null, // Will be calculated later
+            scope: activity.scope ? parseInt(activity.scope.replace('Scope ', '')) : null,
+          }));
 
         if (activitiesToInsert.length > 0) {
           const { error: activitiesError } = await supabase
             .from('value_chain_entries')
             .insert(activitiesToInsert);
 
-          if (activitiesError) throw activitiesError;
+          if (activitiesError) {
+            console.error('Error inserting value chain entries:', activitiesError);
+            throw activitiesError;
+          }
 
           // Classify and insert into lca_classification table
           const classificationsToInsert = valueChainActivities
