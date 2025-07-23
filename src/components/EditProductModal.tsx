@@ -20,6 +20,8 @@ interface ValueChainActivity {
   id: string;
   stage: string;
   activity: string;
+  quantity: string;
+  unit: string;
   scope: string;
   source: string;
 }
@@ -98,6 +100,8 @@ export const EditProductModal = ({ isOpen, onClose, onUpdateProduct, product }: 
         id: entry.id,
         stage: entry.stage || "",
         activity: entry.activity,
+        quantity: entry.quantity?.toString() || "",
+        unit: entry.unit || "kg",
         scope: entry.scope ? `Scope ${entry.scope}` : "",
         source: "", // This field doesn't exist in DB yet, keeping for UI compatibility
       })) || [];
@@ -134,6 +138,8 @@ export const EditProductModal = ({ isOpen, onClose, onUpdateProduct, product }: 
       id: Date.now().toString(),
       stage: "",
       activity: "",
+      quantity: "",
+      unit: "kg",
       scope: "",
       source: "",
     };
@@ -179,16 +185,35 @@ export const EditProductModal = ({ isOpen, onClose, onUpdateProduct, product }: 
 
       // Insert new value chain activities
       if (valueChainActivities.length > 0) {
-        const activitiesToInsert = valueChainActivities
-          .filter(activity => activity.activity.trim() !== '')
-          .map(activity => ({
-            product_id: product.id,
-            stage: activity.stage || null,
-            activity: activity.activity,
-            scope: activity.scope ? parseInt(activity.scope.replace('Scope ', '')) : null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          }));
+        const activitiesToInsert = await Promise.all(
+          valueChainActivities
+            .filter(activity => activity.activity.trim() !== '')
+            .map(async (activity) => {
+              // Get emission factor from own_item_data table
+              const { data: emissionData } = await supabase
+                .from('own_item_data')
+                .select('emission_factor')
+                .eq('activity_name', activity.activity)
+                .single();
+
+              const quantity = activity.quantity ? parseFloat(activity.quantity) : null;
+              const emissionFactor = emissionData?.emission_factor || null;
+              const emissions = quantity && emissionFactor ? quantity * emissionFactor : null;
+
+              return {
+                product_id: product.id,
+                stage: activity.stage || null,
+                activity: activity.activity,
+                quantity: quantity,
+                unit: activity.unit,
+                emission_factor: emissionFactor,
+                emissions: emissions,
+                scope: activity.scope ? parseInt(activity.scope.replace('Scope ', '')) : null,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              };
+            })
+        );
 
         if (activitiesToInsert.length > 0) {
           const { error: activitiesError } = await supabase
@@ -362,6 +387,32 @@ export const EditProductModal = ({ isOpen, onClose, onUpdateProduct, product }: 
                         className="h-8"
                       />
                     </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-xs">Quantity</Label>
+                        <Input
+                          value={activity.quantity}
+                          onChange={(e) => updateValueChainActivity(activity.id, 'quantity', e.target.value)}
+                          placeholder="0"
+                          className="h-8"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Unit</Label>
+                        <Select value={activity.unit} onValueChange={(value) => updateValueChainActivity(activity.id, 'unit', value)}>
+                          <SelectTrigger className="h-8">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {units.map(unit => (
+                              <SelectItem key={unit} value={unit}>
+                                {unit}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                     <div className="grid grid-cols-3 gap-2">
                       <div>
                         <Label className="text-xs">LCA Stage</Label>
@@ -408,7 +459,7 @@ export const EditProductModal = ({ isOpen, onClose, onUpdateProduct, product }: 
                             variant="outline"
                             size="sm"
                             className="h-8 w-8 p-0"
-                          >
+                            >
                             <X className="w-4 h-4" />
                           </Button>
                         </div>
