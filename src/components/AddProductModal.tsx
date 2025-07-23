@@ -31,6 +31,40 @@ interface AddProductModalProps {
   onAddProduct: (product: any) => void;
 }
 
+// Classification functions
+function classifyScopeAndLCA(activity: string) {
+  const lower = activity.toLowerCase();
+  let scope = "Scope 3";
+  let lcaStage = "Unclassified";
+
+  if (["electricity", "grid", "power", "kwh"].some(w => lower.includes(w))) scope = "Scope 2";
+  if (["diesel", "petrol", "generator", "combustion", "fuel"].some(w => lower.includes(w))) scope = "Scope 1";
+
+  if (lower.includes("electricity")) {
+    if (lower.includes("own") || lower.includes("on-site generation")) scope = "Scope 1";
+    else if (lower.includes("supplier") || lower.includes("supply chain")) scope = "Scope 3";
+    else if (lower.includes("purchased") || lower.includes("grid")) scope = "Scope 2";
+  }
+
+  if (["mining", "extraction", "harvest"].some(w => lower.includes(w))) lcaStage = "Raw Material Acquisition";
+  else if (["manufacturing", "production", "assembly"].some(w => lower.includes(w))) lcaStage = "Manufacturing & Processing";
+  else if (["transport", "shipping", "logistics", "delivery"].some(w => lower.includes(w))) lcaStage = "Distribution & Transport";
+  else if (["use", "consumption"].some(w => lower.includes(w))) lcaStage = "Use Phase";
+  else if (["disposal", "landfill", "waste", "recycling"].some(w => lower.includes(w))) lcaStage = "End of Life";
+
+  return { scope, lcaStage };
+}
+
+function parseActivity(activity: string) {
+  const lower = activity.toLowerCase();
+  const types = ["electricity", "diesel", "natural gas", "transport", "plastic"];
+  const sources = ["supplier", "own", "grid", "external", "internal", "on-site", "off-site"];
+  const activityType = types.find(type => lower.includes(type)) || "unknown";
+  const source = sources.find(s => lower.includes(s)) || "unknown";
+  const { scope, lcaStage } = classifyScopeAndLCA(activity);
+  return { activityType, source, lcaStage, scope };
+}
+
 export const AddProductModal = ({ isOpen, onClose, onAddProduct }: AddProductModalProps) => {
   const [formData, setFormData] = useState({
     name: "",
@@ -175,6 +209,30 @@ export const AddProductModal = ({ isOpen, onClose, onAddProduct }: AddProductMod
             .insert(activitiesToInsert);
 
           if (activitiesError) throw activitiesError;
+
+          // Classify and insert into lca_classification table
+          const classificationsToInsert = valueChainActivities
+            .filter(activity => activity.activity.trim() !== '')
+            .map(activity => {
+              const { activityType, source, lcaStage, scope } = parseActivity(activity.activity);
+              return {
+                product_id: product.id,
+                activity_name: activity.activity,
+                activity_type: activityType,
+                source,
+                lca_stage: lcaStage,
+                scope: scope === "Scope 1" ? 1 : scope === "Scope 2" ? 2 : 3,
+                unit: "kg" // Default unit, can be made dynamic if needed
+              };
+            });
+
+          if (classificationsToInsert.length > 0) {
+            const { error: classificationsError } = await supabase
+              .from('lca_classification')
+              .insert(classificationsToInsert);
+
+            if (classificationsError) throw classificationsError;
+          }
         }
       }
 
