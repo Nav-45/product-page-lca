@@ -781,7 +781,7 @@ export const AddProductModal = ({ isOpen, onClose, onAddProduct }: AddProductMod
           <Button type="button" variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" disabled={!formData.name || !formData.category}>
+          <Button type="submit">
             Add Product
           </Button>
         </div>
