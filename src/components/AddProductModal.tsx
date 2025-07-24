@@ -774,8 +774,7 @@ export const AddProductModal = ({ isOpen, onClose, onAddProduct }: AddProductMod
               </Button>
             </div>
           </div>
-          </form>
-        </div>
+       
         
         <div className="flex justify-end space-x-3 pt-4 border-t bg-background">
           <Button type="button" variant="outline" onClick={onClose}>
@@ -784,6 +783,8 @@ export const AddProductModal = ({ isOpen, onClose, onAddProduct }: AddProductMod
           <Button type="submit" disabled={!formData.name || !formData.category}>
             Add Product
           </Button>
+          </div>
+          </form>
         </div>
       </DialogContent>
     </Dialog>
