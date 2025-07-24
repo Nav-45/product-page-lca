@@ -49,8 +49,8 @@ function classifyScopeAndLCA(activity: string) {
     else if (lower.includes("purchased") || lower.includes("grid")) scope = "Scope 2";
   }
 
-  if (["mining", "extraction", "harvest"].some(w => lower.includes(w))) lcaStage = "Raw Material Acquisition";
-  else if (["manufacturing", "production", "assembly"].some(w => lower.includes(w))) lcaStage = "Manufacturing & Processing";
+  if (["mining", "extraction", "harvest", "raw"].some(w => lower.includes(w))) lcaStage = "Raw Material Acquisition";
+  else if (["manufacturing", "production", "assembly", "processing"].some(w => lower.includes(w))) lcaStage = "Manufacturing & Processing";
   else if (["transport", "shipping", "logistics", "delivery"].some(w => lower.includes(w))) lcaStage = "Distribution & Transport";
   else if (["use", "consumption"].some(w => lower.includes(w))) lcaStage = "Use Phase";
   else if (["disposal", "landfill", "waste", "recycling"].some(w => lower.includes(w))) lcaStage = "End of Life";
@@ -774,16 +774,16 @@ export const AddProductModal = ({ isOpen, onClose, onAddProduct }: AddProductMod
               </Button>
             </div>
           </div>
-          
-          <div className="flex justify-end space-x-3 pt-4 border-t bg-background">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={!formData.name || !formData.category}>
-              Add Product
-            </Button>
-          </div>
           </form>
+        </div>
+        
+        <div className="flex justify-end space-x-3 pt-4 border-t bg-background">
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={!formData.name || !formData.category}>
+            Add Product
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

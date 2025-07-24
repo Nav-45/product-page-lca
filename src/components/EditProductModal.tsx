@@ -810,7 +810,6 @@ export const EditProductModal = ({ isOpen, onClose, onUpdateProduct, product }: 
               Last calculated: {product.lastCalculated}
             </div>
           </div>
-          </form>
         </div>
         
         <div className="flex justify-end space-x-3 pt-4 border-t bg-background">
@@ -820,6 +819,8 @@ export const EditProductModal = ({ isOpen, onClose, onUpdateProduct, product }: 
           <Button type="submit" disabled={!formData.name || !formData.category}>
             Update Product
           </Button>
+        </div>
+          </form>
         </div>
       </DialogContent>
     </Dialog>
