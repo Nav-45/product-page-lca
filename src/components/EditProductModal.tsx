@@ -799,27 +799,26 @@ export const EditProductModal = ({ isOpen, onClose, onUpdateProduct, product }: 
             </div>
           </div>
 
-          <div className="bg-secondary/30 p-3 rounded-lg">
-            <div className="text-sm text-muted-foreground">Current CO₂ Footprint</div>
-            <div className="text-lg font-semibold">
-              {product.totalCO2 >= 1000 
-                ? `${(product.totalCO2 / 1000).toFixed(2)}t` 
-                : `${product.totalCO2.toFixed(2)}kg`} CO₂e
+            <div className="bg-secondary/30 p-3 rounded-lg">
+              <div className="text-sm text-muted-foreground">Current CO₂ Footprint</div>
+              <div className="text-lg font-semibold">
+                {product.totalCO2 >= 1000 
+                  ? `${(product.totalCO2 / 1000).toFixed(2)}t` 
+                  : `${product.totalCO2.toFixed(2)}kg`} CO₂e
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">
+                Last calculated: {product.lastCalculated}
+              </div>
             </div>
-            <div className="text-xs text-muted-foreground mt-1">
-              Last calculated: {product.lastCalculated}
+            
+            <div className="flex justify-end space-x-3 pt-4 border-t bg-background">
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={!formData.name || !formData.category}>
+                Update Product
+              </Button>
             </div>
-          </div>
-        </div>
-        
-        <div className="flex justify-end space-x-3 pt-4 border-t bg-background">
-          <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={!formData.name || !formData.category}>
-            Update Product
-          </Button>
-        </div>
           </form>
         </div>
       </DialogContent>
